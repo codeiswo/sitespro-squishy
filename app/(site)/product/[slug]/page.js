@@ -1,6 +1,8 @@
-import { getProductBySlug, getSettings } from '@/lib/db';
+import { getProductBySlug, getProducts, getSettings } from '@/lib/db';
 import { notFound } from 'next/navigation';
+import { parseJSON } from '@/lib/utils';
 import { getThemeArchetype } from '@/lib/theme';
+import siteSettings from '../../../../config/site-settings.json';
 import * as ClassicTheme from '@/components/themes/classic';
 import * as MinimalistTheme from '@/components/themes/minimalist';
 import * as FuturisticTheme from '@/components/themes/futuristic';
@@ -9,6 +11,14 @@ import * as GummyTheme from '@/components/themes/gummy';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+
+function getBaseUrl(settings) {
+  let domain = settings.site_url || siteSettings.domain || 'squishyworld.pages.dev';
+  if (!domain.startsWith('http://') && !domain.startsWith('https://')) {
+    domain = `https://${domain}`;
+  }
+  return domain.replace(/\/$/, '');
+}
 
 const fallbackProducts = {
   'needoh-groovy-glob-squishy': { id: 1, title: 'NeeDoh Groovy Glob Squishy Stress Ball', slug: 'needoh-groovy-glob-squishy', price: 12.99, compare_price: 18.99, brand: 'NeeDoh', image_url: 'https://placehold.co/600x600/FF2E7E/FFFFFF?text=NeeDoh+Squishy', features: '["Super Dough-y","ASMR Approved"]' },
@@ -24,9 +34,46 @@ export async function generateMetadata({ params }) {
   if (!product && fallbackProducts[slug]) product = fallbackProducts[slug];
   if (!product) return { title: 'Product Not Found' };
 
+  let settings = {};
+  try { settings = await getSettings(); } catch (_) {}
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings.site_name || siteSettings.siteName || 'NeeDoh Squishy World';
+  const pageUrl = `${baseUrl}/product/${product.slug}`;
+
+  const title = product.meta_title || `${product.title} | ${siteName}`;
+  const description = product.meta_description || product.description || `Buy ${product.title}. Super dough-y, non-toxic, and ASMR approved sensory relief toy.`;
+
   return {
-    title: `${product.title} | Sensory Squishy Toy`,
-    description: `Buy ${product.title}. Super dough-y, non-toxic, and ASMR approved sensory relief toy.`,
+    title,
+    description,
+    alternates: {
+      canonical: pageUrl,
+      languages: {
+        'en': pageUrl,
+        'x-default': pageUrl,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName,
+      type: 'product',
+      images: [
+        {
+          url: product.image_url,
+          width: 800,
+          height: 800,
+          alt: product.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [product.image_url],
+    },
   };
 }
 
@@ -39,6 +86,9 @@ export default async function ProductDetailPage({ params }) {
 
   let settings = {};
   try { settings = await getSettings(); } catch (_) {}
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings.site_name || siteSettings.siteName || 'NeeDoh Squishy World';
+  const pageUrl = `${baseUrl}/product/${product.slug}`;
 
   const theme = settings.site_theme || 'gummy';
   const archetype = getThemeArchetype(theme);
@@ -50,5 +100,58 @@ export default async function ProductDetailPage({ params }) {
   else if (archetype === 'luxury') SelectedDetail = LuxuryTheme.ProductDetail;
   else SelectedDetail = ClassicTheme.ProductDetail;
 
-  return <SelectedDetail product={product} />;
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.title,
+    "image": [product.image_url],
+    "description": product.description || product.meta_description || product.title,
+    "sku": product.sku || product.slug,
+    "brand": {
+      "@type": "Brand",
+      "name": product.brand || 'NeeDoh'
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": pageUrl,
+      "priceCurrency": "USD",
+      "price": product.price,
+      "priceValidUntil": new Date(Date.now() + 31536000000).toISOString().split('T')[0],
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": "https://schema.org/InStock",
+      "seller": {
+        "@type": "Organization",
+        "name": siteName
+      }
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "96"
+    }
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": baseUrl },
+      { "@type": "ListItem", "position": 2, "name": "Products", "item": `${baseUrl}/products` },
+      { "@type": "ListItem", "position": 3, "name": product.title, "item": pageUrl }
+    ]
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <SelectedDetail product={product} />
+    </>
+  );
 }

@@ -1,5 +1,6 @@
 import { getProducts, getSettings } from '@/lib/db';
 import { getThemeArchetype } from '@/lib/theme';
+import siteSettings from '../../../config/site-settings.json';
 import * as ClassicTheme from '@/components/themes/classic';
 import * as MinimalistTheme from '@/components/themes/minimalist';
 import * as FuturisticTheme from '@/components/themes/futuristic';
@@ -8,6 +9,14 @@ import * as GummyTheme from '@/components/themes/gummy';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+
+function getBaseUrl(settings) {
+  let domain = settings.site_url || siteSettings.domain || 'squishyworld.pages.dev';
+  if (!domain.startsWith('http://') && !domain.startsWith('https://')) {
+    domain = `https://${domain}`;
+  }
+  return domain.replace(/\/$/, '');
+}
 
 const fallbackProducts = [
   { id: 1, title: 'NeeDoh Groovy Glob Squishy Stress Ball', slug: 'needoh-groovy-glob-squishy', price: 12.99, compare_price: 18.99, brand: 'NeeDoh', category: 'Squishy Stress Toys', image_url: 'https://placehold.co/600x600/FF2E7E/FFFFFF?text=NeeDoh+Squishy', features: '["Super Dough-y","ASMR Approved"]', is_featured: 1 },
@@ -19,10 +28,45 @@ const fallbackProducts = [
 const brands = ['NeeDoh', 'Sensory Fun', 'SquishyLab'];
 const categories = ['Squishy Stress Toys', 'Sensory Gel Cubes', 'Food Squishies'];
 
-export async function generateMetadata() {
+export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
+  const brand = params?.brand || '';
+  const category = params?.category || '';
+
+  let settings = {};
+  try { settings = await getSettings(); } catch (_) {}
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings.site_name || siteSettings.siteName || 'NeeDoh Squishy World';
+  const pageUrl = `${baseUrl}/products`;
+
+  let title = `Squishy & Sensory Toys Collection | ${siteName}`;
+  if (brand) title = `${brand} Squishies & Sensory Toys | ${siteName}`;
+  else if (category) title = `${category} | ${siteName}`;
+
+  const description = `Explore our complete collection of NeeDoh Squishies, Nice Cubes, Ice Cubes, and Cheese Squishy sensory toys. Super dough-y feel, ASMR approved.`;
+
   return {
-    title: 'Squishy & Sensory Toys Collection | NeeDoh & Cheese Squishies',
-    description: 'Explore our full collection of NeeDoh Squishies, Nice Cubes, Ice Cubes, and Cheese Squishy sensory toys.',
+    title,
+    description,
+    alternates: {
+      canonical: pageUrl,
+      languages: {
+        'en': pageUrl,
+        'x-default': pageUrl,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   };
 }
 
@@ -58,6 +102,7 @@ export default async function ProductsPage({ searchParams }) {
 
   let settings = {};
   try { settings = await getSettings(); } catch (_) {}
+  const baseUrl = getBaseUrl(settings);
 
   const theme = settings.site_theme || 'gummy';
   const archetype = getThemeArchetype(theme);
@@ -69,17 +114,32 @@ export default async function ProductsPage({ searchParams }) {
   else if (archetype === 'luxury') SelectedProductList = LuxuryTheme.ProductList;
   else SelectedProductList = ClassicTheme.ProductList;
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": baseUrl },
+      { "@type": "ListItem", "position": 2, "name": "Products", "item": `${baseUrl}/products` }
+    ]
+  };
+
   return (
-    <SelectedProductList
-      category={category}
-      brand={brand}
-      sort={sort}
-      products={products}
-      total={total}
-      page={page}
-      totalPages={totalPages}
-      categories={categories}
-      brands={brands}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <SelectedProductList
+        category={category}
+        brand={brand}
+        sort={sort}
+        products={products}
+        total={total}
+        page={page}
+        totalPages={totalPages}
+        categories={categories}
+        brands={brands}
+      />
+    </>
   );
 }

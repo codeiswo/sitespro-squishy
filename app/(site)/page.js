@@ -1,5 +1,6 @@
 import { getAllProducts, getSettings } from '@/lib/db';
 import { getThemeArchetype } from '@/lib/theme';
+import siteSettings from '../../config/site-settings.json';
 import * as ClassicTheme from '@/components/themes/classic';
 import * as MinimalistTheme from '@/components/themes/minimalist';
 import * as FuturisticTheme from '@/components/themes/futuristic';
@@ -8,6 +9,14 @@ import * as GummyTheme from '@/components/themes/gummy';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+
+function getBaseUrl(settings) {
+  let domain = settings.site_url || siteSettings.domain || 'squishyworld.pages.dev';
+  if (!domain.startsWith('http://') && !domain.startsWith('https://')) {
+    domain = `https://${domain}`;
+  }
+  return domain.replace(/\/$/, '');
+}
 
 // Custom Squishy & Sensory Toy fallback dataset
 const fallbackProducts = [
@@ -18,6 +27,39 @@ const fallbackProducts = [
   { id: 5, title: 'NeeDoh Gumdrop Tactile Stress Reliever', slug: 'needoh-gumdrop-tactile-reliever', price: 13.49, compare_price: 19.99, brand: 'NeeDoh', image_url: 'https://placehold.co/600x600/10B981/FFFFFF?text=NeeDoh+Gumdrop', features: '["Gummy Feel","Non-Toxic"]', is_featured: 1 },
   { id: 6, title: 'Sensory Gel Cube Fidget 4-Pack Combo', slug: 'sensory-gel-cube-fidget-pack', price: 29.99, compare_price: 45.99, brand: 'SquishyLab', image_url: 'https://placehold.co/600x600/EC4899/FFFFFF?text=Sensory+Combo', features: '["Multi-Color","Washable"]', is_featured: 1 },
 ];
+
+export async function generateMetadata() {
+  let settings = {};
+  try { settings = await getSettings(); } catch (_) {}
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings.site_name || siteSettings.siteName || 'NeeDoh Squishy World';
+  const title = settings.meta_title || siteSettings.seoTitle || 'NeeDoh Squishy World | Premium Squishy & Sensory Relief Toys';
+  const description = settings.meta_description || siteSettings.seoDescription || 'Shop authentic NeeDoh Squishies, Nice Cubes, Ice Cubes, and Cheese Squishy sensory stress toys. Super dough-y feel, ASMR approved, non-toxic, and washable.';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: baseUrl,
+      languages: {
+        'en': baseUrl,
+        'x-default': baseUrl,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: baseUrl,
+      siteName,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
 
 export default async function HomePage() {
   let products;

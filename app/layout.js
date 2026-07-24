@@ -5,12 +5,18 @@ import { getSettings } from "@/lib/db";
 import { CartProvider } from "@/components/common/cart-context";
 import CartDrawer from "@/components/common/cart-drawer";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
 
 export const runtime = "edge";
 
-
+function getBaseUrl(settings) {
+  let domain = settings.site_url || siteSettings.domain || "squishyworld.pages.dev";
+  if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
+    domain = `https://${domain}`;
+  }
+  return domain.replace(/\/$/, "");
+}
 
 function parseCustomMetaTags(htmlString) {
   if (!htmlString) return {};
@@ -19,23 +25,17 @@ function parseCustomMetaTags(htmlString) {
   const metaNameContent = /<meta\s+[^>]*name=["']([^"']+)["'][^>]*content=["']([^"']+)["'][^>]*\/?>/gi;
   let match;
   while ((match = metaNameContent.exec(htmlString)) !== null) {
-    if (match[1] && match[2]) {
-      otherObj[match[1]] = match[2];
-    }
+    if (match[1] && match[2]) otherObj[match[1]] = match[2];
   }
 
   const metaContentName = /<meta\s+[^>]*content=["']([^"']+)["'][^>]*name=["']([^"']+)["'][^>]*\/?>/gi;
   while ((match = metaContentName.exec(htmlString)) !== null) {
-    if (match[1] && match[2]) {
-      otherObj[match[2]] = match[1];
-    }
+    if (match[1] && match[2]) otherObj[match[2]] = match[1];
   }
 
   const metaPropContent = /<meta\s+[^>]*property=["']([^"']+)["'][^>]*content=["']([^"']+)["'][^>]*\/?>/gi;
   while ((match = metaPropContent.exec(htmlString)) !== null) {
-    if (match[1] && match[2]) {
-      otherObj[match[1]] = match[2];
-    }
+    if (match[1] && match[2]) otherObj[match[1]] = match[2];
   }
 
   return otherObj;
@@ -47,9 +47,10 @@ export async function generateMetadata() {
     settings = await getSettings();
   } catch (_) {}
 
-  const siteName = settings.site_name || siteSettings.siteName || "FiltersPro";
-  const defaultTitle = settings.meta_title || siteSettings.seoTitle || "FiltersPro - Premium Refrigerator Water Filter Replacements";
-  const defaultDescription = settings.meta_description || siteSettings.seoDescription || "Shop premium refrigerator water filter replacements for Samsung, GE, LG, Whirlpool & more. NSF certified, easy installation, up to 60% savings vs OEM. Free shipping on orders over $35.";
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings.site_name || siteSettings.siteName || "NeeDoh Squishy World";
+  const defaultTitle = settings.meta_title || siteSettings.seoTitle || "NeeDoh Squishy World | Premium Squishy & Sensory Relief Toys";
+  const defaultDescription = settings.meta_description || siteSettings.seoDescription || "Shop authentic NeeDoh Squishies, Nice Cubes, Ice Cubes, and Cheese Squishy sensory stress toys. Super dough-y feel, ASMR approved, non-toxic, and washable.";
 
   const icons = {};
   if (settings.site_favicon) {
@@ -64,40 +65,47 @@ export async function generateMetadata() {
   const customOtherMetas = parseCustomMetaTags(customHtmlTags);
 
   return {
+    metadataBase: new URL(baseUrl),
     title: {
       default: defaultTitle,
       template: `%s | ${siteName}`,
     },
     description: defaultDescription,
     icons,
+    alternates: {
+      canonical: baseUrl,
+      languages: {
+        'en': baseUrl,
+        'x-default': baseUrl,
+      },
+    },
     other: {
       ...customOtherMetas,
     },
     keywords: [
-      "refrigerator water filter replacement",
-      "water filter replacement",
-      "refrigerator water filter",
-      "samsung water filter",
-      "ge water filter",
-      "lg water filter",
-      "whirlpool water filter",
-      "fridge water filter",
-      "water filter cartridge",
-      "NSF certified water filter",
+      "needoh squishy",
+      "needoh nice cube",
+      "needoh ice cube",
+      "cheese squishy",
+      "squishy stress toy",
+      "sensory fidget toys",
+      "asmr squishy",
+      "dough squishy ball",
+      "stress relief toy",
     ],
     authors: [{ name: siteName }],
     creator: siteName,
     openGraph: {
       title: defaultTitle,
       description: defaultDescription,
-      url: `https://www.${siteSettings.domain || "filterspro.com"}`,
+      url: baseUrl,
       siteName: siteName,
       images: [
         {
-          url: "/opengraph-image.png",
+          url: `${baseUrl}/opengraph-image.png`,
           width: 1200,
           height: 630,
-          alt: `${siteName} - Premium Water Filter Replacements`,
+          alt: `${siteName} - Premium Squishy & Sensory Relief Toys`,
         },
       ],
       locale: "en_US",
@@ -107,7 +115,7 @@ export async function generateMetadata() {
       card: "summary_large_image",
       title: defaultTitle,
       description: defaultDescription,
-      images: ["/opengraph-image.png"],
+      images: [`${baseUrl}/opengraph-image.png`],
     },
     robots: {
       index: true,
@@ -129,12 +137,48 @@ export default async function RootLayout({ children }) {
     settings = await getSettings();
   } catch (_) {}
 
-  const activeThemeClass = `theme-${settings.site_theme || 'default'}`;
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings.site_name || siteSettings.siteName || "NeeDoh Squishy World";
+  const activeThemeClass = `theme-${settings.site_theme || 'gummy'}`;
   const customHtmlTags = settings.custom_html_tags || '';
+
+  // Organization & WebSite JSON-LD Schema
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${baseUrl}/#website`,
+        "url": baseUrl,
+        "name": siteName,
+        "description": settings.meta_description || siteSettings.seoDescription,
+        "publisher": { "@id": `${baseUrl}/#organization` },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": `${baseUrl}/products?search={search_term_string}`,
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": `${baseUrl}/#organization`,
+        "name": siteName,
+        "url": baseUrl,
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${baseUrl}/favicon.ico`
+        }
+      }
+    ]
+  };
 
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} ${activeThemeClass}`}>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
         {customHtmlTags && (
           <script
             id="custom-html-tags-injector"

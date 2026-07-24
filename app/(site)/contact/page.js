@@ -1,21 +1,59 @@
 import { Mail, Clock, Send, MessageCircle } from 'lucide-react';
 import { getPageBySlug, getSettings } from '@/lib/db';
 import { getThemeArchetype } from '@/lib/theme';
+import siteSettings from '../../../config/site-settings.json';
 import * as ClassicTheme from '@/components/themes/classic';
 import * as MinimalistTheme from '@/components/themes/minimalist';
 import * as FuturisticTheme from '@/components/themes/futuristic';
 import * as LuxuryTheme from '@/components/themes/luxury';
+import * as GummyTheme from '@/components/themes/gummy';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+
+function getBaseUrl(settings) {
+  let domain = settings.site_url || siteSettings.domain || 'squishyworld.pages.dev';
+  if (!domain.startsWith('http://') && !domain.startsWith('https://')) {
+    domain = `https://${domain}`;
+  }
+  return domain.replace(/\/$/, '');
+}
 
 export async function generateMetadata() {
   let page;
   try { page = await getPageBySlug('contact'); } catch { page = null; }
 
+  let settings = {};
+  try { settings = await getSettings(); } catch (_) {}
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings.site_name || siteSettings.siteName || 'NeeDoh Squishy World';
+  const pageUrl = `${baseUrl}/contact`;
+
+  const title = page?.meta_title || `Contact Us | ${siteName}`;
+  const description = page?.meta_description || `Contact ${siteName} customer care for questions about NeeDoh squishy orders, shipping, or sensory product details.`;
+
   return {
-    title: page?.meta_title || page?.title || 'Contact Us',
-    description: page?.meta_description || 'Contact FiltersPro for questions about refrigerator water filter replacements, orders, or wholesale inquiries.',
+    title,
+    description,
+    alternates: {
+      canonical: pageUrl,
+      languages: {
+        'en': pageUrl,
+        'x-default': pageUrl,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   };
 }
 
@@ -25,134 +63,108 @@ export default async function ContactPage() {
 
   let settings = {};
   try { settings = await getSettings(); } catch (_) {}
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings.site_name || siteSettings.siteName || 'NeeDoh Squishy World';
+  const pageUrl = `${baseUrl}/contact`;
 
-  // If dynamic page content exists in the DB, render it with the active theme layout
+  const contactSchema = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "url": pageUrl,
+    "name": `Contact Us - ${siteName}`,
+    "description": "Contact customer support for NeeDoh Squishy World.",
+    "publisher": {
+      "@type": "Organization",
+      "name": siteName,
+      "url": baseUrl
+    }
+  };
+
   if (page && page.content && page.content.trim().length > 0) {
-    const theme = settings.site_theme || 'default';
+    const theme = settings.site_theme || 'gummy';
     const archetype = getThemeArchetype(theme);
 
     let SelectedSinglePage;
-    if (archetype === 'minimalist') SelectedSinglePage = MinimalistTheme.SinglePage;
+    if (archetype === 'gummy') SelectedSinglePage = GummyTheme.SinglePage;
+    else if (archetype === 'minimalist') SelectedSinglePage = MinimalistTheme.SinglePage;
     else if (archetype === 'futuristic') SelectedSinglePage = FuturisticTheme.SinglePage;
     else if (archetype === 'luxury') SelectedSinglePage = LuxuryTheme.SinglePage;
     else SelectedSinglePage = ClassicTheme.SinglePage;
 
-    return <SelectedSinglePage page={page} />;
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }}
+        />
+        <SelectedSinglePage page={page} />
+      </>
+    );
   }
 
-  // Fallback to default contact page with contact form
-  const contactEmail = settings.site_email || 'info@filterspro.com';
+  const contactEmail = settings.site_email || 'support@needohsquishy.com';
 
   return (
-    <div className="pt-24 pb-16 min-h-screen bg-surface dark:bg-surface-dark">
-      {/* Hero */}
-      <section className="py-16 md:py-20 text-center">
-        <div className="container-custom">
-          <span className="text-sm font-semibold text-accent uppercase tracking-widest mb-3 block">Contact Us</span>
-          <h1 className="text-4xl sm:text-5xl font-heading font-bold text-gray-900 dark:text-white mb-4">
-            Get in Touch
-          </h1>
-          <p className="text-lg text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-            Have a question about water filters or need help finding the right replacement? We&apos;re here to help.
-          </p>
-        </div>
-      </section>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }}
+      />
+      <div className="pt-28 pb-16 min-h-screen bg-[#FDF8FA] dark:bg-[#161024]">
+        <section className="py-16 text-center">
+          <div className="container-custom">
+            <span className="text-xs font-bold text-[#FF2E7E] uppercase tracking-widest block mb-2">Get In Touch</span>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">
+              We&apos;re Here to Help!
+            </h1>
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
+              Have questions about your order or our squishy sensory toys? Send us a message below.
+            </p>
+          </div>
+        </section>
 
-      <div className="container-custom">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 max-w-6xl mx-auto">
-          {/* Contact info cards */}
-          <div className="lg:col-span-2 space-y-4">
-            {[
-              { icon: Mail, title: 'Email Us', detail: contactEmail, sub: 'We respond within 24 hours' },
-              { icon: Clock, title: 'Business Hours', detail: 'Mon - Fri, 9AM - 6PM EST', sub: 'Weekend: Limited support' },
-              { icon: MessageCircle, title: 'Live Support', detail: 'Available on business days', sub: 'Quick answers to your questions' },
-            ].map(({ icon: Icon, title, detail, sub }) => (
-              <div key={title} className="card-premium p-6 rounded-2xl flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-6 h-6 text-primary dark:text-accent" />
-                </div>
-                <div>
-                  <h3 className="font-heading font-semibold text-gray-900 dark:text-white">{title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{detail}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+        <section className="pb-20">
+          <div className="container-custom max-w-4xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div className="p-6 rounded-3xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-[#FF2E7E]/10 flex items-center justify-center text-[#FF2E7E] flex-shrink-0">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 dark:text-white mb-1">Email Support</h3>
+                      <p className="text-xs text-gray-500 mb-2">Our squishy customer care team responds within 24 hours.</p>
+                      <a href={`mailto:${contactEmail}`} className="text-[#FF2E7E] font-bold text-sm hover:underline">{contactEmail}</a>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* Contact form */}
-          <div className="lg:col-span-3">
-            <div className="card-premium p-8 rounded-2xl">
-              <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-white mb-6">Send a Message</h2>
-              <form className="space-y-5" id="contact-form">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="p-8 rounded-3xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 shadow-sm">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Send Us a Message</h2>
+                <form className="space-y-4">
                   <div>
-                    <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Name</label>
-                    <input
-                      id="contact-name"
-                      type="text"
-                      placeholder="Your name"
-                      className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition-all"
-                    />
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Your Name</label>
+                    <input type="text" placeholder="John Doe" required className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FB] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:border-[#FF2E7E]" />
                   </div>
                   <div>
-                    <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
-                    <input
-                      id="contact-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition-all"
-                    />
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Email Address</label>
+                    <input type="email" placeholder="john@example.com" required className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FB] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:border-[#FF2E7E]" />
                   </div>
-                </div>
-
-                <div>
-                  <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Subject</label>
-                  <select
-                    id="contact-subject"
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition-all"
-                  >
-                    <option>Product Inquiry</option>
-                    <option>Order Status</option>
-                    <option>Wholesale Inquiry</option>
-                    <option>Returns & Refunds</option>
-                    <option>General Question</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="contact-fridge" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Refrigerator Model (Optional)</label>
-                  <input
-                    id="contact-fridge"
-                    type="text"
-                    placeholder="e.g., Samsung RF28HMEDBSR"
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Message</label>
-                  <textarea
-                    id="contact-message"
-                    rows={5}
-                    placeholder="How can we help you?"
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition-all resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  id="contact-submit"
-                  className="btn-primary w-full text-center py-4 text-lg cursor-pointer"
-                >
-                  <Send className="w-5 h-5 inline mr-2" />
-                  Send Message
-                </button>
-              </form>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Message</label>
+                    <textarea rows="4" placeholder="How can we help you?" required className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FB] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:border-[#FF2E7E]"></textarea>
+                  </div>
+                  <button type="submit" className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FF2E7E] to-[#8B5CF6] text-white font-bold shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2">
+                    <Send className="w-4 h-4" /> Send Message
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 }
