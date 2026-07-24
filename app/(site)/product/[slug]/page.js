@@ -1,6 +1,6 @@
 import { getProductBySlug, getProducts, getSettings } from '@/lib/db';
 import { notFound } from 'next/navigation';
-import { parseJSON } from '@/lib/utils';
+import { parseJSON, stripHtml } from '@/lib/utils';
 import { getThemeArchetype } from '@/lib/theme';
 import siteSettings from '../../../../config/site-settings.json';
 import * as ClassicTheme from '@/components/themes/classic';
@@ -41,7 +41,12 @@ export async function generateMetadata({ params }) {
   const pageUrl = `${baseUrl}/product/${product.slug}`;
 
   const title = product.meta_title || `${product.title} | ${siteName}`;
-  const description = product.meta_description || product.description || `Buy ${product.title}. Super dough-y, non-toxic, and ASMR approved sensory relief toy.`;
+  const rawDesc = product.meta_description || product.description || product.content || `Buy ${product.title}. Super dough-y, non-toxic, and ASMR approved sensory relief toy.`;
+  const description = stripHtml(rawDesc).substring(0, 160);
+
+  const images = product.image_url
+    ? [{ url: product.image_url, width: 800, height: 800, alt: product.title }]
+    : [];
 
   return {
     title,
@@ -58,21 +63,14 @@ export async function generateMetadata({ params }) {
       description,
       url: pageUrl,
       siteName,
-      type: 'product',
-      images: [
-        {
-          url: product.image_url,
-          width: 800,
-          height: 800,
-          alt: product.title,
-        },
-      ],
+      type: 'website',
+      images,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [product.image_url],
+      images: product.image_url ? [product.image_url] : [],
     },
   };
 }
@@ -90,6 +88,12 @@ export default async function ProductDetailPage({ params }) {
   const siteName = settings.site_name || siteSettings.siteName || 'NeeDoh Squishy World';
   const pageUrl = `${baseUrl}/product/${product.slug}`;
 
+  const gallery = parseJSON(product.gallery, []);
+  const features = parseJSON(product.features, []);
+  const compatibleModels = parseJSON(product.compatible_models, []);
+  const allImages = Array.from(new Set([product.image_url, ...(Array.isArray(gallery) ? gallery : [])].filter(Boolean)));
+  const discount = product.compare_price ? Math.round((1 - product.price / product.compare_price) * 100) : 0;
+
   const theme = settings.site_theme || 'gummy';
   const archetype = getThemeArchetype(theme);
 
@@ -100,12 +104,15 @@ export default async function ProductDetailPage({ params }) {
   else if (archetype === 'luxury') SelectedDetail = LuxuryTheme.ProductDetail;
   else SelectedDetail = ClassicTheme.ProductDetail;
 
+  const rawDesc = product.description || product.meta_description || product.content || product.title;
+  const cleanDescription = stripHtml(rawDesc).substring(0, 300);
+
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": product.title,
-    "image": [product.image_url],
-    "description": product.description || product.meta_description || product.title,
+    "image": allImages.length > 0 ? allImages : [baseUrl + '/opengraph-image.png'],
+    "description": cleanDescription,
     "sku": product.sku || product.slug,
     "brand": {
       "@type": "Brand",
@@ -115,7 +122,7 @@ export default async function ProductDetailPage({ params }) {
       "@type": "Offer",
       "url": pageUrl,
       "priceCurrency": "USD",
-      "price": product.price,
+      "price": Number(product.price) || 0,
       "priceValidUntil": new Date(Date.now() + 31536000000).toISOString().split('T')[0],
       "itemCondition": "https://schema.org/NewCondition",
       "availability": "https://schema.org/InStock",
@@ -151,7 +158,13 @@ export default async function ProductDetailPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <SelectedDetail product={product} />
+      <SelectedDetail
+        product={product}
+        allImages={allImages}
+        features={features}
+        compatibleModels={compatibleModels}
+        discount={discount}
+      />
     </>
   );
 }
