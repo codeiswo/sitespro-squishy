@@ -1,0 +1,541 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 213 39% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 39% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 39% 15%;
+    --primary: 207 78% 28%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 195 100% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 15% 85%;
+    --muted-foreground: 210 10% 47%;
+    --accent: 195 100% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 15% 91%;
+    --input: 214 15% 91%;
+    --ring: 207 78% 28%;
+    --radius: 0.75rem;
+    --gold: 40 58% 56%;
+  }
+
+  .dark {
+    --background: 215 28% 7%;
+    --foreground: 210 20% 92%;
+    --card: 215 25% 11%;
+    --card-foreground: 210 20% 92%;
+    --popover: 215 25% 11%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 210 70% 60%;
+    --primary-foreground: 215 28% 7%;
+    --secondary: 195 90% 55%;
+    --secondary-foreground: 215 28% 7%;
+    --muted: 215 20% 20%;
+    --muted-foreground: 210 15% 60%;
+    --accent: 195 90% 55%;
+    --accent-foreground: 215 28% 7%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 20% 18%;
+    --input: 215 20% 18%;
+    --ring: 210 70% 60%;
+    --gold: 40 65% 63%;
+  }
+
+  /* ======================================================== */
+  /* 10-THEMES DESIGN SYSTEM TOKENS DECLARATIONS             */
+  /* ======================================================== */
+
+  /* 2. Nordic Minimalist Theme (nordic) */
+  .theme-nordic {
+    --background: 0 0% 98%;
+    --foreground: 220 20% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 12%;
+    --primary: 0 0% 15%;
+    --secondary: 0 0% 30%;
+    --accent: 0 0% 25%;
+    --border: 220 15% 94%;
+    --ring: 0 0% 15%;
+    --gold: 30 10% 50%;
+  }
+  .theme-nordic.dark {
+    --background: 220 15% 10%;
+    --foreground: 0 0% 90%;
+    --card: 220 15% 12%;
+    --card-foreground: 0 0% 90%;
+    --primary: 0 0% 85%;
+    --secondary: 0 0% 70%;
+    --accent: 0 0% 75%;
+    --border: 220 15% 16%;
+    --ring: 0 0% 85%;
+    --gold: 30 10% 60%;
+  }
+
+  /* 3. Cyberpunk Dark Neon Theme (cyberpunk) */
+  .theme-cyberpunk {
+    --background: 260 60% 4%;
+    --foreground: 180 100% 92%;
+    --card: 260 50% 8%;
+    --card-foreground: 180 100% 92%;
+    --primary: 320 100% 55%;
+    --secondary: 180 100% 50%;
+    --accent: 180 100% 50%;
+    --border: 260 30% 20%;
+    --ring: 320 100% 55%;
+    --gold: 55 100% 55%;
+  }
+  .theme-cyberpunk.dark {
+    --background: 260 60% 4%;
+    --foreground: 180 100% 92%;
+    --card: 260 50% 8%;
+    --card-foreground: 180 100% 92%;
+    --primary: 320 100% 55%;
+    --secondary: 180 100% 50%;
+    --accent: 180 100% 50%;
+    --border: 260 30% 20%;
+    --ring: 320 100% 55%;
+    --gold: 55 100% 55%;
+  }
+
+  /* 4. Luxury Gold & Black Theme (luxury) */
+  .theme-luxury {
+    --background: 0 0% 5%;
+    --foreground: 40 10% 90%;
+    --card: 0 0% 8%;
+    --card-foreground: 40 10% 90%;
+    --primary: 40 50% 55%;
+    --secondary: 0 0% 12%;
+    --accent: 40 50% 55%;
+    --border: 0 0% 14%;
+    --ring: 40 50% 55%;
+    --gold: 40 50% 55%;
+  }
+  .theme-luxury.dark {
+    --background: 0 0% 5%;
+    --foreground: 40 10% 90%;
+    --card: 0 0% 8%;
+    --card-foreground: 40 10% 90%;
+    --primary: 40 50% 55%;
+    --secondary: 0 0% 12%;
+    --accent: 40 50% 55%;
+    --border: 0 0% 14%;
+    --ring: 40 50% 55%;
+    --gold: 40 50% 55%;
+  }
+
+  /* 5. Natural Organic Sage Theme (organic) */
+  .theme-organic {
+    --background: 40 40% 96%;
+    --foreground: 120 20% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 120 20% 14%;
+    --primary: 90 25% 32%;
+    --secondary: 40 30% 82%;
+    --accent: 90 25% 32%;
+    --border: 40 20% 86%;
+    --ring: 90 25% 32%;
+    --gold: 35 40% 42%;
+  }
+  .theme-organic.dark {
+    --background: 120 20% 7%;
+    --foreground: 40 25% 88%;
+    --card: 120 20% 10%;
+    --card-foreground: 40 25% 88%;
+    --primary: 90 25% 52%;
+    --secondary: 120 15% 18%;
+    --accent: 90 25% 52%;
+    --border: 120 15% 14%;
+    --ring: 90 25% 52%;
+    --gold: 35 40% 52%;
+  }
+
+  /* 6. Editorial Review Style Theme (editorial) */
+  .theme-editorial {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --primary: 0 0% 0%;
+    --secondary: 0 0% 18%;
+    --accent: 0 0% 25%;
+    --border: 0 0% 82%;
+    --ring: 0 0% 0%;
+    --gold: 45 40% 42%;
+  }
+  .theme-editorial.dark {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 90%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 90%;
+    --primary: 0 0% 100%;
+    --secondary: 0 0% 78%;
+    --accent: 0 0% 68%;
+    --border: 0 0% 18%;
+    --ring: 0 0% 100%;
+    --gold: 45 40% 52%;
+  }
+
+  /* 7. Vibrant Eco Orange Theme (vibrant) */
+  .theme-vibrant {
+    --background: 25 30% 97%;
+    --foreground: 25 60% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 25 60% 10%;
+    --primary: 15 95% 52%;
+    --secondary: 195 90% 42%;
+    --accent: 195 90% 42%;
+    --border: 25 20% 90%;
+    --ring: 15 95% 52%;
+    --gold: 42 80% 47%;
+  }
+  .theme-vibrant.dark {
+    --background: 25 30% 7%;
+    --foreground: 25 30% 90%;
+    --card: 25 20% 10%;
+    --card-foreground: 25 30% 90%;
+    --primary: 15 95% 52%;
+    --secondary: 195 85% 52%;
+    --accent: 195 85% 52%;
+    --border: 25 15% 16%;
+    --ring: 15 95% 52%;
+    --gold: 42 70% 52%;
+  }
+
+  /* 8. Glassmorphism Futuristic Theme (futuristic) */
+  .theme-futuristic {
+    --background: 220 40% 3%;
+    --foreground: 210 30% 95%;
+    --card: 220 30% 6%;
+    --card-foreground: 210 30% 95%;
+    --primary: 260 90% 62%;
+    --secondary: 190 90% 48%;
+    --accent: 190 90% 48%;
+    --border: 220 20% 14%;
+    --ring: 260 90% 62%;
+    --gold: 320 80% 58%;
+  }
+  .theme-futuristic.dark {
+    --background: 220 40% 3%;
+    --foreground: 210 30% 95%;
+    --card: 220 30% 6%;
+    --card-foreground: 210 30% 95%;
+    --primary: 260 90% 62%;
+    --secondary: 190 90% 48%;
+    --accent: 190 90% 48%;
+    --border: 220 20% 14%;
+    --ring: 260 90% 62%;
+    --gold: 320 80% 58%;
+  }
+
+  /* 9. Bold High-Contrast Red (bold) */
+  .theme-bold {
+    --background: 0 0% 3%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 100%;
+    --primary: 355 85% 52%;
+    --secondary: 0 0% 100%;
+    --accent: 0 0% 100%;
+    --border: 0 0% 14%;
+    --ring: 355 85% 52%;
+    --gold: 355 85% 52%;
+  }
+  .theme-bold.dark {
+    --background: 0 0% 3%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 100%;
+    --primary: 355 85% 52%;
+    --secondary: 0 0% 100%;
+    --accent: 0 0% 100%;
+    --border: 0 0% 14%;
+    --ring: 355 85% 52%;
+    --gold: 355 85% 52%;
+  }
+
+  /* 10. Corporate Slate Blue (trust) */
+  .theme-trust {
+    --background: 215 15% 96%;
+    --foreground: 215 25% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 14%;
+    --primary: 215 30% 22%;
+    --secondary: 210 40% 38%;
+    --accent: 210 40% 38%;
+    --border: 215 15% 88%;
+    --ring: 215 30% 22%;
+    --gold: 35 50% 42%;
+  }
+  .theme-trust.dark {
+    --background: 215 20% 8%;
+    --foreground: 210 20% 90%;
+    --card: 215 20% 11%;
+    --card-foreground: 210 20% 90%;
+    --primary: 210 40% 58%;
+    --secondary: 210 30% 68%;
+    --accent: 210 30% 68%;
+    --border: 215 15% 16%;
+    --ring: 210 40% 58%;
+    --gold: 35 45% 52%;
+  }
+
+  /* Typography / Layout Theme Overrides */
+  .theme-luxury body, .theme-luxury .font-body,
+  .theme-editorial body, .theme-editorial .font-body {
+    font-family: Georgia, serif !important;
+  }
+  
+  .theme-luxury h1, .theme-luxury h2, .theme-luxury h3, .theme-luxury .font-heading,
+  .theme-editorial h1, .theme-editorial h2, .theme-editorial h3, .theme-editorial .font-heading {
+    font-family: Georgia, serif !important;
+    font-weight: 500;
+  }
+
+  .theme-nordic h1, .theme-nordic h2, .theme-nordic h3, .theme-nordic .font-heading {
+    font-weight: 300 !important;
+    letter-spacing: -0.03em;
+  }
+  
+  .theme-cyberpunk h1, .theme-cyberpunk h2, .theme-cyberpunk h3, .theme-cyberpunk .font-heading,
+  .theme-bold h1, .theme-bold h2, .theme-bold h3, .theme-bold .font-heading {
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .theme-futuristic #hero-section {
+    background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 40%);
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+}
+
+@layer components {
+  /* Glass morphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .dark .glass {
+    background: rgba(22, 27, 34, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Premium card with hover effect */
+  .card-premium {
+    @apply bg-white rounded-2xl overflow-hidden transition-all duration-500;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  .card-premium:hover {
+    box-shadow: 0 20px 60px rgba(15, 76, 129, 0.15);
+    transform: translateY(-8px);
+  }
+
+  .dark .card-premium {
+    @apply bg-card-dark;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .card-premium:hover {
+    box-shadow: 0 20px 60px rgba(0, 180, 216, 0.1);
+  }
+
+  /* 3D card hover */
+  .card-3d {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+  }
+
+  .card-3d:hover {
+    transform: rotateY(-2deg) rotateX(2deg) translateY(-8px);
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #0F4C81 0%, #00B4D8 100%);
+  }
+
+  .dark .text-gradient {
+    background-image: linear-gradient(135deg, #4A9EE5 0%, #48CAE4 100%);
+  }
+
+  /* Gold text */
+  .text-gold {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #D4A84B 0%, #F5EDDC 50%, #D4A84B 100%);
+  }
+
+  /* Section spacing */
+  .section-padding {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+
+  /* Container */
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300;
+    background: linear-gradient(135deg, #0F4C81 0%, #00B4D8 100%);
+    box-shadow: 0 4px 15px rgba(15, 76, 129, 0.3);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 8px 30px rgba(15, 76, 129, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300;
+    @apply border-2 border-primary text-primary;
+  }
+
+  .btn-outline:hover {
+    @apply bg-primary text-white;
+    transform: translateY(-2px);
+  }
+
+  /* Water wave background */
+  .water-bg {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .water-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(0, 180, 216, 0.1) 0%, transparent 70%);
+    animation: waterWave 8s ease-in-out infinite;
+  }
+
+  /* Scroll indicator */
+  .scroll-indicator {
+    @apply w-6 h-10 rounded-full border-2 border-white/50 relative;
+  }
+
+  .scroll-indicator::after {
+    content: '';
+    @apply absolute w-1.5 h-1.5 bg-white rounded-full left-1/2 -translate-x-1/2 top-2;
+    animation: scrollBounce 2s ease-in-out infinite;
+  }
+
+  /* Admin sidebar */
+  .admin-sidebar {
+    @apply fixed left-0 top-0 h-screen w-64 bg-gray-900 text-white p-6 z-50 transition-transform duration-300;
+  }
+
+  .admin-content {
+    @apply ml-0 lg:ml-64 min-h-screen bg-gray-50 dark:bg-gray-950 transition-all duration-300;
+  }
+
+  /* Shimmer loading */
+  .shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Text balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animate on scroll markers */
+  .animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .animate-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .animate-delay-100 { transition-delay: 100ms; }
+  .animate-delay-200 { transition-delay: 200ms; }
+  .animate-delay-300 { transition-delay: 300ms; }
+  .animate-delay-400 { transition-delay: 400ms; }
+  .animate-delay-500 { transition-delay: 500ms; }
+}
+
+/* Additional keyframes */
+@keyframes scrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  50% { transform: translateX(-50%) translateY(12px); opacity: 0.3; }
+}
+
+@keyframes waterWave {
+  0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
+  25% { transform: translateX(10px) translateY(-5px) rotate(1deg); }
+  50% { transform: translateX(0) translateY(-10px) rotate(0deg); }
+  75% { transform: translateX(-10px) translateY(-5px) rotate(-1deg); }
+}
+
+/* Custom scrollbar for admin */
+.admin-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.admin-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

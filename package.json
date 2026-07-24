@@ -1,0 +1,30 @@
+{
+  "name": "sitespro",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-date=2024-09-23 --compatibility-flags=nodejs_compat --d1=DB",
+    "db:migrate": "npx wrangler d1 execute filterspro-db --local --file=./migrations/0001_init.sql",
+    "db:migrate:remote": "npx wrangler d1 execute filterspro-db --remote --file=./migrations/0001_init.sql"
+  },
+  "dependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
+    "jose": "^5.9.0",
+    "lucide-react": "^0.454.0",
+    "next": "15.5.2",
+    "next-themes": "^0.3.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "sonner": "^1.5.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  }
+}

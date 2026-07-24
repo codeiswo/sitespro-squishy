@@ -1,0 +1,18 @@
+name = "sitespro"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "filterspro-db"
+database_id = "fc1033d4-5b8d-4295-989a-40f33420eb7d"
+
+# 自定义域名配置说明:
+# 1. 部署后在 Cloudflare Pages 控制台绑定域名
+# 2. 或使用 wrangler pages project create filterspro 创建项目后
+#    通过 Cloudflare Dashboard -> Pages -> Custom domains 添加域名
+# 3. 确保域名 DNS 已托管在 Cloudflare
+
+# URL 转发规则通过 D1 数据库中的 redirects 表管理
+# 在 middleware.js 中实现转发逻辑

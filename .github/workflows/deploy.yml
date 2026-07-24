@@ -1,0 +1,66 @@
+name: Deploy Site
+
+on:
+  repository_dispatch:
+    types: [deploy-site]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Write Site Configuration
+        run: |
+          cat <<EOF > config/site-settings.json
+          {
+            "siteName": "${{ github.event.client_payload.site_config.site_name }}",
+            "domain": "${{ github.event.client_payload.site_config.domain }}",
+            "primaryColor": "${{ github.event.client_payload.site_config.primary_color }}",
+            "accentColor": "${{ github.event.client_payload.site_config.accent_color }}",
+            "seoTitle": "${{ github.event.client_payload.site_config.seo_title }}",
+            "seoDescription": "${{ github.event.client_payload.site_config.seo_description }}"
+          }
+          EOF
+
+      - name: Update wrangler.toml D1 ID
+        run: |
+          node -e "
+            const fs = require('fs');
+            let toml = fs.readFileSync('wrangler.toml', 'utf8');
+            toml = toml.replace(/database_id = \".*\"/, 'database_id = \"${{ github.event.client_payload.cloudflare.d1_database_id }}\"');
+            fs.writeFileSync('wrangler.toml', toml, 'utf8');
+          "
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Compile and Build Site
+        run: npm run pages:build
+
+      - name: Deploy to Cloudflare Pages
+        run: npx wrangler pages deploy .vercel/output/static --project-name=${{ github.event.client_payload.cloudflare.cf_pages_project_name }} --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ github.event.client_payload.cloudflare.cf_api_token }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ github.event.client_payload.cloudflare.cf_account_id }}
+
+      - name: Callback Deployment Success
+        if: success()
+        run: |
+          curl -X POST "${{ github.event.client_payload.callback_url }}" \
+            -H "Content-Type: application/json" \
+            -d '{"site_id": "${{ github.event.client_payload.site_id }}", "status": "success", "secret": "${{ github.event.client_payload.callback_secret }}"}'
+
+      - name: Callback Deployment Failure
+        if: failure()
+        run: |
+          curl -X POST "${{ github.event.client_payload.callback_url }}" \
+            -H "Content-Type: application/json" \
+            -d '{"site_id": "${{ github.event.client_payload.site_id }}", "status": "failed", "secret": "${{ github.event.client_payload.callback_secret }}"}'
