@@ -22,20 +22,20 @@ function parseCustomMetaTags(htmlString) {
   if (!htmlString) return {};
   const otherObj = {};
 
-  const metaNameContent = /<meta\s+[^>]*name=["']([^"']+)["'][^>]*content=["']([^"']+)["'][^>]*\/?>/gi;
+  const metaTagRegex = /<meta\s+([^>]+)\/?>/gi;
   let match;
-  while ((match = metaNameContent.exec(htmlString)) !== null) {
-    if (match[1] && match[2]) otherObj[match[1]] = match[2];
-  }
 
-  const metaContentName = /<meta\s+[^>]*content=["']([^"']+)["'][^>]*name=["']([^"']+)["'][^>]*\/?>/gi;
-  while ((match = metaContentName.exec(htmlString)) !== null) {
-    if (match[1] && match[2]) otherObj[match[2]] = match[1];
-  }
+  while ((match = metaTagRegex.exec(htmlString)) !== null) {
+    const attrString = match[1];
+    
+    // Extract key (name, property, or http-equiv)
+    const keyMatch = attrString.match(/(?:name|property|http-equiv)\s*=\s*["']([^"']+)["']/i);
+    // Extract value (content)
+    const contentMatch = attrString.match(/content\s*=\s*["']([^"']+)["']/i);
 
-  const metaPropContent = /<meta\s+[^>]*property=["']([^"']+)["'][^>]*content=["']([^"']+)["'][^>]*\/?>/gi;
-  while ((match = metaPropContent.exec(htmlString)) !== null) {
-    if (match[1] && match[2]) otherObj[match[1]] = match[2];
+    if (keyMatch && keyMatch[1] && contentMatch && contentMatch[1]) {
+      otherObj[keyMatch[1]] = contentMatch[1];
+    }
   }
 
   return otherObj;
@@ -188,13 +188,16 @@ export default async function RootLayout({ children }) {
                   var temp = document.createElement('div');
                   temp.innerHTML = ${JSON.stringify(customHtmlTags)};
                   Array.from(temp.childNodes).forEach(function(node){
-                    if (node.tagName === 'SCRIPT') {
+                    if (!node.tagName) return;
+                    var tag = node.tagName.toUpperCase();
+                    if (tag === 'SCRIPT') {
                       var s = document.createElement('script');
                       Array.from(node.attributes).forEach(function(attr){ s.setAttribute(attr.name, attr.value); });
                       s.appendChild(document.createTextNode(node.innerHTML));
                       document.head.appendChild(s);
-                    } else if (node.tagName === 'LINK' || node.tagName === 'STYLE') {
-                      document.head.appendChild(node.cloneNode(true));
+                    } else if (tag === 'LINK' || tag === 'STYLE' || tag === 'META') {
+                      var elem = node.cloneNode(true);
+                      document.head.appendChild(elem);
                     }
                   });
                 } catch(e){}
