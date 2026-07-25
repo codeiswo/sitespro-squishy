@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useCart } from './cart-context';
-import { X, ShoppingBag, Plus, Minus, Trash2, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
+import { X, ShoppingBag, Plus, Minus, Trash2, ShieldCheck, ArrowLeft, Loader2, CreditCard, Mail } from 'lucide-react';
+import Link from 'next/link';
 
 export default function CartDrawer() {
   const {
@@ -18,8 +19,11 @@ export default function CartDrawer() {
     clearCart
   } = useCart();
 
+  const [enablePayment, setEnablePayment] = useState(true);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const [paypalClientId, setPaypalClientId] = useState('');
+  const [hasStripeSecret, setHasStripeSecret] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('paypal'); // 'paypal' or 'stripe'
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const buttonContainerRef = useRef(null);
@@ -31,7 +35,7 @@ export default function CartDrawer() {
     };
     if (isCartOpen) {
       window.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden'; // Lock background scroll
+      document.body.style.overflow = 'hidden';
     }
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -39,29 +43,35 @@ export default function CartDrawer() {
     };
   }, [isCartOpen, setIsCartOpen]);
 
-  // Fetch PayPal Config
+  // Fetch Checkout Config
   useEffect(() => {
-    if (checkoutStep === 'checkout' && !paypalLoaded) {
+    if (checkoutStep === 'checkout') {
       setLoadingConfig(true);
       fetch('/api/checkout/config')
         .then(res => res.json())
         .then(data => {
-          if (data.paypalClientId) {
-            setPaypalClientId(data.paypalClientId);
-            loadPaypalSDK(data.paypalClientId, data.paypalMode);
+          if (data.enablePayment === false) {
+            setEnablePayment(false);
           } else {
-            alert('PayPal is not configured for this website yet. Please configure it in Settings.');
-            setCheckoutStep('cart');
+            setEnablePayment(true);
+            if (data.paypalClientId) {
+              setPaypalClientId(data.paypalClientId);
+              loadPaypalSDK(data.paypalClientId, data.paypalMode);
+            }
+            if (data.hasStripeSecret) {
+              setHasStripeSecret(true);
+              if (!data.paypalClientId) {
+                setPaymentMethod('stripe');
+              }
+            }
           }
         })
         .catch(err => {
           console.error(err);
-          alert('Failed to load payment configuration.');
-          setCheckoutStep('cart');
         })
         .finally(() => setLoadingConfig(false));
     }
-  }, [checkoutStep, paypalLoaded]);
+  }, [checkoutStep]);
 
   // Dynamically load PayPal SDK script
   const loadPaypalSDK = (clientId, mode) => {
@@ -79,16 +89,14 @@ export default function CartDrawer() {
       setPaypalLoaded(true);
     };
     script.onerror = () => {
-      alert('Failed to load payment gateway SDK.');
-      setCheckoutStep('cart');
+      console.warn('Failed to load PayPal SDK script.');
     };
     document.body.appendChild(script);
   };
 
   // Render PayPal buttons once SDK is loaded
   useEffect(() => {
-    if (paypalLoaded && checkoutStep === 'checkout' && buttonContainerRef.current) {
-      // Clear container first to prevent duplicate buttons
+    if (enablePayment && paymentMethod === 'paypal' && paypalLoaded && checkoutStep === 'checkout' && buttonContainerRef.current) {
       buttonContainerRef.current.innerHTML = '';
 
       if (window.paypal) {
@@ -114,7 +122,7 @@ export default function CartDrawer() {
               throw err;
             }
           },
-          onApprove: async (data, actions) => {
+          onApprove: async (data) => {
             setIsProcessingPayment(true);
             try {
               const res = await fetch('/api/checkout/capture-paypal-order', {
@@ -143,7 +151,29 @@ export default function CartDrawer() {
         }).render(buttonContainerRef.current);
       }
     }
-  }, [paypalLoaded, checkoutStep, cartItems]);
+  }, [enablePayment, paymentMethod, paypalLoaded, checkoutStep, cartItems, clearCart, setCheckoutStep]);
+
+  // Handle Stripe Credit Card Checkout Redirect
+  const handleStripeCheckout = async () => {
+    setIsProcessingPayment(true);
+    try {
+      const res = await fetch('/api/checkout/create-stripe-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: cartItems })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to initialize Stripe payment');
+      }
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      alert(err.message);
+      setIsProcessingPayment(false);
+    }
+  };
 
   if (!isCartOpen) return null;
 
@@ -160,11 +190,11 @@ export default function CartDrawer() {
         {/* Header */}
         <div className="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-primary dark:text-accent" />
+            <ShoppingBag className="w-5 h-5 text-[#FF2E7E]" />
             <h2 className="text-lg font-heading font-bold text-gray-900 dark:text-white">
-              {checkoutStep === 'cart' ? 'Shopping Cart' : checkoutStep === 'checkout' ? 'Checkout' : 'Order Placed!'}
+              {checkoutStep === 'cart' ? 'Squishy Cart' : checkoutStep === 'checkout' ? 'Checkout' : 'Order Placed!'}
             </h2>
-            <span className="text-xs bg-primary/10 text-primary dark:bg-accent/15 dark:text-accent px-2 py-0.5 rounded-full font-bold">
+            <span className="text-xs bg-[#FF2E7E]/10 text-[#FF2E7E] px-2 py-0.5 rounded-full font-bold">
               {cartCount}
             </span>
           </div>
@@ -183,11 +213,11 @@ export default function CartDrawer() {
             {cartItems.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
                 <ShoppingBag className="w-16 h-16 text-gray-300 dark:text-gray-700 stroke-[1.5]" />
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">Your cart is empty</h3>
-                <p className="text-sm text-gray-400 max-w-xs">Add some premium water filters to get pure clean water for your home.</p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">Your squishy cart is empty</h3>
+                <p className="text-sm text-gray-400 max-w-xs">Add some dough-y squishies to start your sensory stress relief!</p>
                 <button 
                   onClick={() => setIsCartOpen(false)}
-                  className="btn-primary text-sm px-6 py-2.5"
+                  className="px-6 py-2.5 rounded-xl bg-[#FF2E7E] text-white font-bold text-sm cursor-pointer shadow-md hover:bg-[#E0266F] transition-all"
                 >
                   Start Shopping
                 </button>
@@ -203,14 +233,12 @@ export default function CartDrawer() {
                       </div>
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div>
-                          <span className="text-[10px] text-accent uppercase font-bold tracking-wider">{item.brand}</span>
+                          <span className="text-[10px] text-[#8B5CF6] uppercase font-bold tracking-wider">{item.brand}</span>
                           <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={item.title}>
                             {item.title}
                           </h4>
-                          {item.sku && <p className="text-[10px] text-gray-400 font-mono mt-0.5">SKU: {item.sku}</p>}
                         </div>
                         <div className="flex items-center justify-between">
-                          {/* Quantity selectors */}
                           <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-1 bg-gray-50 dark:bg-gray-800">
                             <button 
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -228,7 +256,7 @@ export default function CartDrawer() {
                           </div>
                           
                           <div className="flex items-center gap-3">
-                            <span className="text-sm font-bold text-primary dark:text-accent">${(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="text-sm font-bold text-[#FF2E7E]">${(item.price * item.quantity).toFixed(2)}</span>
                             <button 
                               onClick={() => removeFromCart(item.id)}
                               className="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-500/10 transition-all cursor-pointer"
@@ -248,13 +276,10 @@ export default function CartDrawer() {
                     <span className="text-gray-500 dark:text-gray-400 font-medium">Subtotal</span>
                     <span className="text-lg font-bold text-gray-900 dark:text-white">${cartTotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-gray-400 justify-center">
-                    <ShieldCheck className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Secure Checkout with SSL 256-bit encryption</span>
-                  </div>
+
                   <button 
                     onClick={() => setCheckoutStep('checkout')}
-                    className="btn-primary w-full text-center py-3.5 text-base font-bold shadow-lg shadow-primary/10"
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FF2E7E] to-[#8B5CF6] text-white font-bold text-base shadow-lg shadow-[#FF2E7E]/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                   >
                     Proceed to Checkout
                   </button>
@@ -266,11 +291,11 @@ export default function CartDrawer() {
 
         {/* View 2: Payment step */}
         {checkoutStep === 'checkout' && (
-          <div className="flex-1 flex flex-col p-5 space-y-5">
+          <div className="flex-1 flex flex-col p-5 space-y-5 overflow-y-auto">
             <button 
               disabled={isProcessingPayment}
               onClick={() => setCheckoutStep('cart')}
-              className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-primary dark:hover:text-accent font-semibold transition-colors mr-auto cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[#FF2E7E] font-semibold transition-colors mr-auto cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Cart</span>
@@ -291,39 +316,110 @@ export default function CartDrawer() {
               </div>
             </div>
 
-            {/* Address notice */}
-            <div className="text-[11px] leading-relaxed text-gray-400 bg-blue-500/5 dark:bg-accent/5 border border-blue-500/10 dark:border-accent/10 p-3 rounded-xl flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-accent shrink-0 mt-1.5 animate-pulse" />
-              <span>
-                Please confirm your shipping address and billing details in the PayPal portal. The address entered on PayPal will be used for shipping.
-              </span>
-            </div>
+            {/* Check Payment Enable Status */}
+            {!enablePayment ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4 bg-amber-500/5 rounded-2xl border border-amber-500/20">
+                <Mail className="w-10 h-10 text-amber-500" />
+                <h4 className="text-base font-bold text-gray-900 dark:text-white">Online Checkout Disabled</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Direct online checkout is currently offline. Please submit an inquiry with your order details and we will arrange invoicing for you.
+                </p>
+                <Link
+                  href="/contact"
+                  onClick={() => setIsCartOpen(false)}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+                >
+                  <Mail className="w-4 h-4" /> Contact Us to Order
+                </Link>
+              </div>
+            ) : (
+              /* Payment Enabled View */
+              <div className="flex-1 flex flex-col justify-between space-y-4">
+                {loadingConfig ? (
+                  <div className="flex flex-col items-center gap-2 py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#FF2E7E]" />
+                    <span className="text-xs text-gray-400">Loading payment channels...</span>
+                  </div>
+                ) : isProcessingPayment ? (
+                  <div className="flex flex-col items-center gap-3 py-8 text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-green-500" />
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">Processing Payment...</h4>
+                    <p className="text-xs text-gray-400 max-w-xs">Please wait while we prepare your secure checkout session.</p>
+                  </div>
+                ) : (
+                  <div className="w-full space-y-4">
+                    {/* Payment Method Selector Tabs */}
+                    {(paypalClientId || hasStripeSecret) && (
+                      <div className="flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 text-xs font-bold">
+                        {paypalClientId && (
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod('paypal')}
+                            className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${
+                              paymentMethod === 'paypal'
+                                ? 'bg-white dark:bg-gray-700 text-[#FF2E7E] shadow-sm'
+                                : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                          >
+                            PayPal
+                          </button>
+                        )}
+                        {hasStripeSecret && (
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod('stripe')}
+                            className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                              paymentMethod === 'stripe'
+                                ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            Credit Card (Stripe)
+                          </button>
+                        )}
+                      </div>
+                    )}
 
-            {/* Payment Container */}
-            <div className="flex-1 flex flex-col justify-center items-center">
-              {loadingConfig ? (
-                <div className="flex flex-col items-center gap-2 py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary dark:text-accent" />
-                  <span className="text-xs text-gray-400">Loading payment methods...</span>
-                </div>
-              ) : isProcessingPayment ? (
-                <div className="flex flex-col items-center gap-3 py-8 text-center">
-                  <Loader2 className="w-10 h-10 animate-spin text-green-500" />
-                  <h4 className="text-sm font-bold text-gray-900 dark:text-white">Processing Payment...</h4>
-                  <p className="text-xs text-gray-400 max-w-xs">Please do not close this window or refresh the page while we authorize your order.</p>
-                </div>
-              ) : (
-                <div className="w-full space-y-4">
-                  <div className="text-center font-bold text-xs uppercase tracking-wider text-gray-500 select-none">Pay securely with:</div>
-                  <div ref={buttonContainerRef} id="paypal-button-container" className="w-full min-h-[150px]" />
-                </div>
-              )}
-            </div>
+                    {/* PayPal Container */}
+                    {paymentMethod === 'paypal' && paypalClientId && (
+                      <div className="w-full space-y-2">
+                        <div ref={buttonContainerRef} id="paypal-button-container" className="w-full min-h-[150px]" />
+                      </div>
+                    )}
 
-            <div className="border-t border-gray-100 dark:border-gray-800 pt-4 flex items-center justify-center gap-1.5 text-[10px] text-gray-400 select-none">
-              <ShieldCheck className="w-4 h-4 text-green-500" />
-              <span>PayPal encrypted payment, safe and secure.</span>
-            </div>
+                    {/* Stripe Credit Card Container */}
+                    {paymentMethod === 'stripe' && hasStripeSecret && (
+                      <div className="w-full space-y-3 pt-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                          Pay securely using your Visa, MasterCard, American Express, or Discover card.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleStripeCheckout}
+                          disabled={isProcessingPayment}
+                          className="w-full py-4 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-bold rounded-2xl text-base shadow-lg shadow-[#8B5CF6]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <CreditCard className="w-5 h-5" />
+                          Pay with Credit Card
+                        </button>
+                      </div>
+                    )}
+
+                    {!paypalClientId && !hasStripeSecret && (
+                      <div className="text-center py-6 text-xs text-amber-500 font-semibold bg-amber-500/10 rounded-xl p-3">
+                        No online payment channel is configured for this website yet.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="border-t border-gray-100 dark:border-gray-800 pt-4 flex items-center justify-center gap-1.5 text-[10px] text-gray-400 select-none">
+                  <ShieldCheck className="w-4 h-4 text-green-500" />
+                  <span>256-Bit SSL Encrypted & PCI Compliant Payment</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -335,18 +431,14 @@ export default function CartDrawer() {
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Payment Successful!</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-              Thank you for shopping with us! Your payment has been captured and order is placed successfully.
+              Thank you for shopping with us! Your squishy order has been placed successfully.
             </p>
-            <div className="bg-gray-50 dark:bg-gray-850 p-4 rounded-xl border border-gray-150 dark:border-gray-800 text-xs text-gray-600 dark:text-gray-400 text-left w-full space-y-1">
-              <div><span className="font-semibold">Notification:</span> A confirmation email will be sent shortly.</div>
-              <div><span className="font-semibold">Shipment:</span> Track info will be sent once dispatched.</div>
-            </div>
             <button 
               onClick={() => {
                 setCheckoutStep('cart');
                 setIsCartOpen(false);
               }}
-              className="btn-primary px-8 py-3 text-sm font-bold"
+              className="px-8 py-3 rounded-xl bg-[#FF2E7E] text-white text-sm font-bold cursor-pointer"
             >
               Continue Shopping
             </button>
