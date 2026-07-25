@@ -41,6 +41,27 @@ function parseCustomMetaTags(htmlString) {
   return otherObj;
 }
 
+function parseMetaElements(htmlString) {
+  if (!htmlString) return [];
+  const elements = [];
+  const metaTagRegex = /<meta\s+([^>]+)\/?>/gi;
+  let match;
+
+  while ((match = metaTagRegex.exec(htmlString)) !== null) {
+    const attrString = match[1];
+    const attrs = {};
+    const attrRegex = /([a-z0-9_-]+)\s*=\s*["']([^"']+)["']/gi;
+    let attrMatch;
+    while ((attrMatch = attrRegex.exec(attrString)) !== null) {
+      attrs[attrMatch[1].toLowerCase()] = attrMatch[2];
+    }
+    if (attrs.name || attrs.property || attrs['http-equiv']) {
+      elements.push(attrs);
+    }
+  }
+  return elements;
+}
+
 export async function generateMetadata() {
   let settings = {};
   try {
@@ -141,6 +162,7 @@ export default async function RootLayout({ children }) {
   const siteName = settings.site_name || siteSettings.siteName || "NeeDoh Squishy World";
   const activeThemeClass = `theme-${settings.site_theme || 'gummy'}`;
   const customHtmlTags = settings.custom_html_tags || '';
+  const ssrMetaElements = parseMetaElements(customHtmlTags);
 
   // Organization & WebSite JSON-LD Schema
   const websiteSchema = {
@@ -179,6 +201,10 @@ export default async function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
+        {/* Render static SSR <meta> elements directly in <head> for Bing / Google Webmaster crawlers */}
+        {ssrMetaElements.map((attrs, idx) => (
+          <meta key={`ssr-meta-${idx}`} {...attrs} />
+        ))}
         {customHtmlTags && (
           <script
             id="custom-html-tags-injector"
@@ -195,7 +221,7 @@ export default async function RootLayout({ children }) {
                       Array.from(node.attributes).forEach(function(attr){ s.setAttribute(attr.name, attr.value); });
                       s.appendChild(document.createTextNode(node.innerHTML));
                       document.head.appendChild(s);
-                    } else if (tag === 'LINK' || tag === 'STYLE' || tag === 'META') {
+                    } else if (tag === 'LINK' || tag === 'STYLE') {
                       var elem = node.cloneNode(true);
                       document.head.appendChild(elem);
                     }
