@@ -6,9 +6,11 @@ import { getSettings } from "@/lib/db";
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
-
 export default async function SiteLayout({ children }) {
-  const settings = await getSettings();
+  let settings = {};
+  try {
+    settings = await getSettings();
+  } catch (_) {}
 
   return (
     <>

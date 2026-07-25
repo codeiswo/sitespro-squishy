@@ -23,7 +23,6 @@ function parseCustomMetaTags(htmlString) {
   const verification = {};
   const other = {};
 
-  // Match any <meta ...> tag regardless of line breaks or attribute order
   const metaTagRegex = /<meta\s+([^>]+)\/?>/gi;
   let match;
 
@@ -76,7 +75,7 @@ export async function generateMetadata() {
   const customHtmlTags = settings.custom_html_tags || "";
   const { verification: customVerification, other: customOtherMetas } = parseCustomMetaTags(customHtmlTags);
 
-  return {
+  const metadata = {
     metadataBase: new URL(baseUrl),
     title: {
       default: defaultTitle,
@@ -90,14 +89,6 @@ export async function generateMetadata() {
         'en': baseUrl,
         'x-default': baseUrl,
       },
-    },
-    verification: {
-      other: {
-        ...customVerification,
-      },
-    },
-    other: {
-      ...customOtherMetas,
     },
     keywords: [
       "needoh squishy",
@@ -146,6 +137,16 @@ export async function generateMetadata() {
       },
     },
   };
+
+  if (Object.keys(customVerification).length > 0) {
+    metadata.verification = { other: customVerification };
+  }
+
+  if (Object.keys(customOtherMetas).length > 0) {
+    metadata.other = customOtherMetas;
+  }
+
+  return metadata;
 }
 
 export default async function RootLayout({ children }) {
@@ -212,7 +213,7 @@ export default async function RootLayout({ children }) {
                       Array.from(node.attributes).forEach(function(attr){ s.setAttribute(attr.name, attr.value); });
                       s.appendChild(document.createTextNode(node.innerHTML));
                       document.head.appendChild(s);
-                    } else if (tag === 'LINK' || tag === 'STYLE') {
+                    } else if (tag === 'LINK' || tag === 'STYLE' || tag === 'META') {
                       var elem = node.cloneNode(true);
                       document.head.appendChild(elem);
                     }
