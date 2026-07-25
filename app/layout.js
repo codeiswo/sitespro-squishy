@@ -19,47 +19,38 @@ function getBaseUrl(settings) {
 }
 
 function parseCustomMetaTags(htmlString) {
-  if (!htmlString) return {};
-  const otherObj = {};
+  if (!htmlString || typeof htmlString !== 'string') return { verification: {}, other: {} };
+  const verification = {};
+  const other = {};
 
+  // Match any <meta ...> tag regardless of line breaks or attribute order
   const metaTagRegex = /<meta\s+([^>]+)\/?>/gi;
   let match;
 
   while ((match = metaTagRegex.exec(htmlString)) !== null) {
-    const attrString = match[1];
-    
-    // Extract key (name, property, or http-equiv)
-    const keyMatch = attrString.match(/(?:name|property|http-equiv)\s*=\s*["']([^"']+)["']/i);
-    // Extract value (content)
-    const contentMatch = attrString.match(/content\s*=\s*["']([^"']+)["']/i);
+    try {
+      const attrString = match[1];
+      const nameMatch = attrString.match(/name\s*=\s*["']([^"']+)["']/i);
+      const propMatch = attrString.match(/(?:property|http-equiv)\s*=\s*["']([^"']+)["']/i);
+      const contentMatch = attrString.match(/content\s*=\s*["']([^"']+)["']/i);
 
-    if (keyMatch && keyMatch[1] && contentMatch && contentMatch[1]) {
-      otherObj[keyMatch[1]] = contentMatch[1];
-    }
+      const key = (nameMatch && nameMatch[1]) || (propMatch && propMatch[1]);
+      const value = contentMatch && contentMatch[1];
+
+      if (key && value) {
+        const cleanKey = key.trim();
+        const cleanVal = value.trim();
+        
+        if (cleanKey.toLowerCase().includes('verification') || cleanKey.toLowerCase().includes('validate')) {
+          verification[cleanKey] = cleanVal;
+        } else {
+          other[cleanKey] = cleanVal;
+        }
+      }
+    } catch (_) {}
   }
 
-  return otherObj;
-}
-
-function parseMetaElements(htmlString) {
-  if (!htmlString) return [];
-  const elements = [];
-  const metaTagRegex = /<meta\s+([^>]+)\/?>/gi;
-  let match;
-
-  while ((match = metaTagRegex.exec(htmlString)) !== null) {
-    const attrString = match[1];
-    const attrs = {};
-    const attrRegex = /([a-z0-9_-]+)\s*=\s*["']([^"']+)["']/gi;
-    let attrMatch;
-    while ((attrMatch = attrRegex.exec(attrString)) !== null) {
-      attrs[attrMatch[1].toLowerCase()] = attrMatch[2];
-    }
-    if (attrs.name || attrs.property || attrs['http-equiv']) {
-      elements.push(attrs);
-    }
-  }
-  return elements;
+  return { verification, other };
 }
 
 export async function generateMetadata() {
@@ -83,7 +74,7 @@ export async function generateMetadata() {
   }
 
   const customHtmlTags = settings.custom_html_tags || "";
-  const customOtherMetas = parseCustomMetaTags(customHtmlTags);
+  const { verification: customVerification, other: customOtherMetas } = parseCustomMetaTags(customHtmlTags);
 
   return {
     metadataBase: new URL(baseUrl),
@@ -98,6 +89,11 @@ export async function generateMetadata() {
       languages: {
         'en': baseUrl,
         'x-default': baseUrl,
+      },
+    },
+    verification: {
+      other: {
+        ...customVerification,
       },
     },
     other: {
@@ -162,7 +158,6 @@ export default async function RootLayout({ children }) {
   const siteName = settings.site_name || siteSettings.siteName || "NeeDoh Squishy World";
   const activeThemeClass = `theme-${settings.site_theme || 'gummy'}`;
   const customHtmlTags = settings.custom_html_tags || '';
-  const ssrMetaElements = parseMetaElements(customHtmlTags);
 
   // Organization & WebSite JSON-LD Schema
   const websiteSchema = {
@@ -201,10 +196,6 @@ export default async function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
-        {/* Render static SSR <meta> elements directly in <head> for Bing / Google Webmaster crawlers */}
-        {ssrMetaElements.map((attrs, idx) => (
-          <meta key={`ssr-meta-${idx}`} {...attrs} />
-        ))}
         {customHtmlTags && (
           <script
             id="custom-html-tags-injector"
