@@ -21,7 +21,7 @@ export default async function robots() {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/'],
+        disallow: ['/admin', '/admin/', '/api', '/api/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
