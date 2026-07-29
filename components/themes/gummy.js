@@ -245,24 +245,51 @@ export function ProductList({ products = [], title = 'Squishy Collection' }) {
 
 export const ProductCatalog = ProductList;
 
-export function ProductDetail({ product }) {
+export function ProductDetail({ product, allImages = [], discount = 0, features = [], relatedProducts = [] }) {
   const { addItem } = useCart();
   if (!product) return null;
+
+  let featureList = [];
+  if (Array.isArray(features)) {
+    featureList = features;
+  } else if (typeof features === 'string' && features) {
+    try {
+      featureList = JSON.parse(features);
+    } catch (_) {}
+  } else if (product.features) {
+    try {
+      featureList = typeof product.features === 'string' ? JSON.parse(product.features) : product.features;
+    } catch (_) {}
+  }
+
+  const galleryImages = allImages.length > 0 ? allImages : (product.image_url ? [product.image_url] : []);
 
   return (
     <div className="pt-28 pb-16 min-h-screen bg-[#FDF8FA] dark:bg-[#161024]">
       <div className="container-custom max-w-5xl">
+        {/* Main Product Card */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-white dark:bg-gray-800 p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-700 shadow-lg">
-          <div className="relative aspect-square bg-[#F8F5FB] dark:bg-gray-900 rounded-2xl p-6">
-            <Image src={product.image_url} alt={product.title} fill className="object-contain p-6" unoptimized />
+          <div className="space-y-4">
+            <div className="relative aspect-square bg-[#F8F5FB] dark:bg-gray-900 rounded-2xl p-6 overflow-hidden">
+              <Image src={product.image_url} alt={product.title} fill className="object-contain p-6 hover:scale-105 transition-transform" unoptimized />
+            </div>
+            {galleryImages.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {galleryImages.map((img, i) => (
+                  <div key={i} className="relative aspect-square rounded-xl bg-[#F8F5FB] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 overflow-hidden p-2">
+                    <img src={img} alt={`View ${i + 1}`} className="w-full h-full object-contain" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
               <span className="px-3 py-1 rounded-full bg-[#FF2E7E]/10 text-[#FF2E7E] text-xs font-bold inline-block mb-2">
                 {product.brand || 'Sensory Toy'}
               </span>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">{product.title}</h1>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">{product.title}</h1>
             </div>
 
             <div className="flex items-baseline gap-3">
@@ -270,9 +297,16 @@ export function ProductDetail({ product }) {
               {product.compare_price && <span className="text-sm text-gray-400 line-through">${product.compare_price}</span>}
             </div>
 
+            {/* Product Description Summary */}
+            {product.description && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-[#F8F5FB] dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+                {product.description}
+              </p>
+            )}
+
             <div className="p-4 rounded-2xl bg-[#F8F5FB] dark:bg-gray-900 space-y-2 text-xs">
               <div className="flex justify-between font-bold text-gray-700 dark:text-gray-300">
-                <span>Tactile Softness</span>
+                <span>Tactile Softness & Squeeze Index</span>
                 <span className="text-[#FF2E7E]">96% Super Dough-y</span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -281,11 +315,64 @@ export function ProductDetail({ product }) {
               <p className="text-[11px] text-gray-500 pt-1">Tested for non-toxic safety, washable with warm soap & water.</p>
             </div>
 
+            {/* Key Features Bullets */}
+            {featureList.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200">Key Highlights</h3>
+                <ul className="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+                  {featureList.map((f, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-[#FF2E7E] font-bold">✓</span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <button onClick={() => addItem(product)} className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#FF2E7E] to-[#8B5CF6] text-white font-extrabold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer">
               Add To Cart
             </button>
           </div>
         </div>
+
+        {/* Detailed Product Content Block */}
+        {product.content && (
+          <div className="mt-10 bg-white dark:bg-gray-800 p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-700 shadow-md">
+            <h2 className="text-xl font-extrabold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Product Details & Description</h2>
+            <div
+              className="prose dark:prose-invert max-w-none text-sm text-gray-700 dark:text-gray-300 prose-headings:font-bold prose-a:text-[#FF2E7E]"
+              dangerouslySetInnerHTML={{ __html: product.content }}
+            />
+          </div>
+        )}
+
+        {/* Related Products */}
+        {relatedProducts && relatedProducts.length > 0 && (
+          <div className="mt-14">
+            <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-6">You May Also Like</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {relatedProducts.map((rp) => (
+                <div key={rp.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="relative aspect-square rounded-xl bg-[#F8F5FB] dark:bg-gray-900 mb-3 p-3">
+                      <Image src={rp.image_url} alt={rp.title} fill className="object-contain p-2" unoptimized />
+                    </div>
+                    <h3 className="font-bold text-sm text-gray-900 dark:text-white line-clamp-2 mb-1">
+                      <Link href={`/product/${rp.slug}`}>{rp.title}</Link>
+                    </h3>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="font-extrabold text-[#FF2E7E] text-base">${rp.price}</span>
+                    <button onClick={() => addItem(rp)} className="px-3 py-1.5 rounded-lg bg-[#8B5CF6] text-white font-bold text-xs hover:bg-[#7C3AED] transition-colors">
+                      Add
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
