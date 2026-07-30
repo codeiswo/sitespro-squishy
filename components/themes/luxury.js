@@ -573,7 +573,20 @@ export function ProductDetail({ product, allImages, discount, features, compatib
 // ============================================
 // 4. SINGLE PAGE (CMS)
 // ============================================
-export function SinglePage({ page }) {
+export function SinglePage({ page, settings = {} }) {
+  if (!page) return null;
+
+  const siteName = settings.site_name || siteSettings.siteName || 'Squishy World';
+  const domain = settings.site_url ? settings.site_url.replace(/^https?:\/\//, '').replace(/\/$/, '') : (siteSettings.domain || 'squishyshop.com');
+  const siteEmail = settings.site_email || `info@${domain}`;
+
+  let content = page.content || '';
+  content = content.replace(/info@filterspro\.com/gi, siteEmail);
+  content = content.replace(/FiltersPro/g, siteName);
+  content = content.replace(/sells premium water filter replacement products for various refrigerator brands/gi, 'sells high-quality squishy, sensory toys, and stress-relief products');
+  content = content.replace(/water filter replacement/gi, 'sensory squishy and stress relief toy');
+  content = content.replace(/refrigerator water filter/gi, 'sensory squishy product');
+
   return (
     <div className="pt-28 pb-16 min-h-screen bg-[#070708] text-[#e5e5e7]">
       <div className="container-custom max-w-3xl">
@@ -588,7 +601,7 @@ export function SinglePage({ page }) {
         <div className="p-8 md:p-12 border border-gold/10 bg-[#0f0f11] rounded-none">
           <div
             className="prose prose-sm prose-invert max-w-none prose-headings:font-heading prose-headings:text-white prose-a:text-[#d4a84b] font-heading"
-            dangerouslySetInnerHTML={{ __html: page.content }}
+            dangerouslySetInnerHTML={{ __html: content }}
           />
         </div>
       </div>

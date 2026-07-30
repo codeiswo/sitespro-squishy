@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Droplets, Mail, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 import siteSettings from "@/config/site-settings.json";
@@ -5,20 +7,23 @@ import siteSettings from "@/config/site-settings.json";
 export default function Footer({ settings = {} }) {
   const currentYear = new Date().getFullYear();
 
+  const siteName = settings.site_name || siteSettings.siteName || 'Squishy World';
+  const domain = settings.site_url ? settings.site_url.replace(/^https?:\/\//, '').replace(/\/$/, '') : (siteSettings.domain || 'squishyshop.com');
+  const contactEmail = settings.site_email || `info@${domain}`;
+
   const footerLinks = {
     products: [
-      { name: 'Refrigerator Water Filters', href: '/products?category=Refrigerator+Water+Filters' },
-      { name: 'Refrigerator Air Filters', href: '/products?category=Refrigerator+Air+Filters' },
-      { name: 'Ice Maker', href: '/products?category=Ice+Maker' },
       { name: 'All Products', href: '/products' },
+      { name: 'Featured Squishies', href: '/products?category=Squishy+Toys' },
+      { name: 'Nice Cube & Gel', href: '/products?category=Gel+Squishy' },
+      { name: 'Dough Squishies', href: '/products?category=Dough+Squishy' },
     ],
-    brands: [
-      { name: 'Samsung Filters', href: '/products?brand=Samsung' },
-      { name: 'GE Filters', href: '/products?brand=GE' },
-      { name: 'LG Filters', href: '/products?brand=LG' },
-      { name: 'Whirlpool Filters', href: '/products?brand=Whirlpool' },
-      { name: 'Maytag Filters', href: '/products?brand=Maytag' },
-      { name: 'Frigidaire Filters', href: '/products?brand=Frigidaire' },
+    categories: [
+      { name: 'NeeDoh Squishy', href: '/products?category=Squishy+Toys' },
+      { name: 'Nice Cube Gel', href: '/products?category=Gel+Squishy' },
+      { name: 'Cheese Squishies', href: '/products?category=Cheese+Squishy' },
+      { name: 'Sensory Fidgets', href: '/products' },
+      { name: 'Stress Relief Balls', href: '/products' },
     ],
     company: [
       { name: 'About Us', href: '/about' },
@@ -29,10 +34,8 @@ export default function Footer({ settings = {} }) {
     ],
   };
 
-  const contactEmail = settings.site_email || `info@${siteSettings.domain || 'filterspro.com'}`;
-
   return (
-    <footer id="site-footer" className="bg-gray-900 text-gray-300">
+    <footer id="site-footer" className="bg-slate-900 text-gray-300 border-t border-slate-800">
       {/* Main footer */}
       <div className="container-custom pt-16 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
@@ -42,7 +45,7 @@ export default function Footer({ settings = {} }) {
               {settings.site_logo ? (
                 <img
                   src={settings.site_logo}
-                  alt={settings.site_name || 'Logo'}
+                  alt={siteName}
                   className="h-10 w-auto object-contain"
                 />
               ) : (
@@ -51,14 +54,13 @@ export default function Footer({ settings = {} }) {
                     <Droplets className="w-5 h-5 text-white" />
                   </div>
                   <span className="text-xl font-bold font-heading text-white tracking-tight">
-                    {settings.site_name || 'FiltersPro'}
+                    {siteName}
                   </span>
                 </>
               )}
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Premium refrigerator water filter replacements for all major brands. 
-              NSF certified, easy installation, pure clean water for your family.
+              {settings.meta_description || settings.site_tagline || "Discover high-quality sensory squishies, stress relief fidget toys, and novelty items designed for fun, focus, and relaxation."}
             </p>
             <div className="flex gap-3">
               {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
@@ -87,11 +89,11 @@ export default function Footer({ settings = {} }) {
             </ul>
           </div>
 
-          {/* Brands */}
+          {/* Popular Categories */}
           <div>
-            <h3 className="text-white font-heading font-semibold text-sm uppercase tracking-wider mb-4">Brands</h3>
+            <h3 className="text-white font-heading font-semibold text-sm uppercase tracking-wider mb-4">Categories</h3>
             <ul className="space-y-2.5">
-              {footerLinks.brands.map((link) => (
+              {footerLinks.categories.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="text-sm text-gray-400 hover:text-accent transition-colors duration-300">
                     {link.name}
@@ -115,7 +117,7 @@ export default function Footer({ settings = {} }) {
             </ul>
             <div className="space-y-3">
               <a href={`mailto:${contactEmail}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-accent transition-colors">
-                <Mail className="w-4 h-4" />
+                <Mail className="w-4 h-4 text-accent" />
                 {contactEmail}
               </a>
             </div>
@@ -124,13 +126,13 @@ export default function Footer({ settings = {} }) {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-white/5">
+      <div className="border-t border-white/5 bg-slate-950/60">
         <div className="container-custom py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-gray-500">
-            © {currentYear} {settings.site_name || 'FiltersPro'}. All rights reserved.
+          <p className="text-xs text-gray-400">
+            © {currentYear} {siteName}. All rights reserved.
           </p>
-          <p className="text-xs text-gray-500">
-            Premium Refrigerator Water Filter Replacements
+          <p className="text-xs text-gray-400 font-medium">
+            {settings.site_tagline || "Sensory & Stress Relief Squishy Toys"}
           </p>
         </div>
       </div>

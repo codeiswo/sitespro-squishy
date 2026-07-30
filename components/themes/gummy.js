@@ -378,14 +378,26 @@ export function ProductDetail({ product, allImages = [], discount = 0, features 
   );
 }
 
-export function SinglePage({ page }) {
+export function SinglePage({ page, settings = {} }) {
   if (!page) return null;
+
+  const siteName = settings.site_name || siteSettings.siteName || 'Squishy World';
+  const domain = settings.site_url ? settings.site_url.replace(/^https?:\/\//, '').replace(/\/$/, '') : (siteSettings.domain || 'squishyshop.com');
+  const siteEmail = settings.site_email || `info@${domain}`;
+
+  let content = page.content || '';
+  content = content.replace(/info@filterspro\.com/gi, siteEmail);
+  content = content.replace(/FiltersPro/g, siteName);
+  content = content.replace(/sells premium water filter replacement products for various refrigerator brands/gi, 'sells high-quality squishy, sensory toys, and stress-relief products');
+  content = content.replace(/water filter replacement/gi, 'sensory squishy and stress relief toy');
+  content = content.replace(/refrigerator water filter/gi, 'sensory squishy product');
+
   return (
     <div className="pt-28 pb-16 min-h-screen bg-[#FDF8FA] dark:bg-[#161024]">
       <div className="container-custom max-w-3xl">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-700 shadow-sm prose dark:prose-invert max-w-none">
-          <h1>{page.title}</h1>
-          <div dangerouslySetInnerHTML={{ __html: page.content }} />
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-700 shadow-sm prose dark:prose-invert max-w-none text-gray-800 dark:text-gray-200">
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6">{page.title}</h1>
+          <div dangerouslySetInnerHTML={{ __html: content }} />
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ pages_build_output_dir = ".vercel/output/static"
 [[d1_databases]]
 binding = "DB"
 database_name = "filterspro-db"
-database_id = "fc1033d4-5b8d-4295-989a-40f33420eb7d"
+database_id = "ad3044b1-c5e8-42c6-afec-e2999db95791"
 
 # 自定义域名配置说明:
 # 1. 部署后在 Cloudflare Pages 控制台绑定域名

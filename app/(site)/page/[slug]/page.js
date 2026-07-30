@@ -91,5 +91,5 @@ export default async function CMSPage({ params }) {
   else if (archetype === 'luxury') SelectedSinglePage = LuxuryTheme.SinglePage;
   else SelectedSinglePage = ClassicTheme.SinglePage;
 
-  return <SelectedSinglePage page={page} />;
+  return <SelectedSinglePage page={page} settings={settings} />;
 }
