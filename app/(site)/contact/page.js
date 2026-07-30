@@ -1,12 +1,6 @@
 import { Mail, Clock, Send, MessageCircle, HelpCircle, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
-import { getPageBySlug, getSettings } from '@/lib/db';
-import { getThemeArchetype } from '@/lib/theme';
+import { getSettings } from '@/lib/db';
 import siteSettings from '../../../config/site-settings.json';
-import * as ClassicTheme from '@/components/themes/classic';
-import * as MinimalistTheme from '@/components/themes/minimalist';
-import * as FuturisticTheme from '@/components/themes/futuristic';
-import * as LuxuryTheme from '@/components/themes/luxury';
-import * as GummyTheme from '@/components/themes/gummy';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -20,17 +14,14 @@ function getBaseUrl(settings) {
 }
 
 export async function generateMetadata() {
-  let page;
-  try { page = await getPageBySlug('contact'); } catch { page = null; }
-
   let settings = {};
   try { settings = await getSettings(); } catch (_) {}
   const baseUrl = getBaseUrl(settings);
   const siteName = settings.site_name || siteSettings.siteName || 'NeeDoh Squishy World';
   const pageUrl = `${baseUrl}/contact`;
 
-  const title = page?.meta_title || `Contact Us | ${siteName}`;
-  const description = page?.meta_description || `Contact ${siteName} customer care for questions about NeeDoh squishy orders, shipping, or sensory product details.`;
+  const title = `Contact Us | ${siteName}`;
+  const description = `Contact ${siteName} customer care for questions about NeeDoh squishy orders, shipping, or sensory product details.`;
 
   return {
     title,
@@ -58,9 +49,6 @@ export async function generateMetadata() {
 }
 
 export default async function ContactPage() {
-  let page;
-  try { page = await getPageBySlug('contact'); } catch { page = null; }
-
   let settings = {};
   try { settings = await getSettings(); } catch (_) {}
   const baseUrl = getBaseUrl(settings);
@@ -81,28 +69,6 @@ export default async function ContactPage() {
       "url": baseUrl
     }
   };
-
-  if (page && page.content && page.content.trim().length > 100) {
-    const theme = settings.site_theme || 'gummy';
-    const archetype = getThemeArchetype(theme);
-
-    let SelectedSinglePage;
-    if (archetype === 'gummy') SelectedSinglePage = GummyTheme.SinglePage;
-    else if (archetype === 'minimalist') SelectedSinglePage = MinimalistTheme.SinglePage;
-    else if (archetype === 'futuristic') SelectedSinglePage = FuturisticTheme.SinglePage;
-    else if (archetype === 'luxury') SelectedSinglePage = LuxuryTheme.SinglePage;
-    else SelectedSinglePage = ClassicTheme.SinglePage;
-
-    return (
-      <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }}
-        />
-        <SelectedSinglePage page={page} settings={settings} />
-      </>
-    );
-  }
 
   const faqs = [
     {
@@ -133,12 +99,14 @@ export default async function ContactPage() {
         {/* Header */}
         <section className="py-16 text-center border-b border-gray-100 dark:border-gray-800">
           <div className="container-custom max-w-4xl">
-            <span className="text-xs font-bold text-[#FF2E7E] uppercase tracking-widest block mb-3">Get In Touch</span>
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF2E7E]/10 text-[#FF2E7E] text-xs font-extrabold uppercase tracking-widest mb-3">
+              <MessageCircle className="w-3.5 h-3.5" /> Get In Touch
+            </span>
             <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">
               We&apos;re Here to Help!
             </h1>
             <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-xl mx-auto leading-relaxed">
-              Have questions about your order, shipping, or squishy care? Send us a message below or check our quick FAQs.
+              Have questions about your order, shipping status, or product care? Send us a message below or check our quick FAQs.
             </p>
           </div>
         </section>
@@ -157,7 +125,7 @@ export default async function ContactPage() {
                     <div>
                       <h3 className="font-bold text-gray-900 dark:text-white text-base mb-1">Email Customer Care</h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Our squishy care team responds within 24 hours.</p>
-                      <a href={`mailto:${contactEmail}`} className="text-[#FF2E7E] font-bold text-sm hover:underline block">{contactEmail}</a>
+                      <a href={`mailto:${contactEmail}`} className="text-[#FF2E7E] font-extrabold text-sm hover:underline block">{contactEmail}</a>
                     </div>
                   </div>
                 </div>
@@ -181,9 +149,9 @@ export default async function ContactPage() {
                       <Truck className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 dark:text-white text-base mb-1">Order & Shipping Inquiry</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Need help tracking a package or changing shipping details?</p>
-                      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">Hassle-Free 30-Day Guarantee</p>
+                      <h3 className="font-bold text-gray-900 dark:text-white text-base mb-1">Order & Shipping Assistance</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Need help tracking a package or updating your order?</p>
+                      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">Hassle-Free 30-Day Money-Back Guarantee</p>
                     </div>
                   </div>
                 </div>
@@ -202,10 +170,14 @@ export default async function ContactPage() {
                     <input type="email" placeholder="john@example.com" required className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FB] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:border-[#FF2E7E]" />
                   </div>
                   <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Subject</label>
+                    <input type="text" placeholder="Order Inquiry / Product Question" required className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FB] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:border-[#FF2E7E]" />
+                  </div>
+                  <div>
                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Message</label>
                     <textarea rows="4" placeholder="How can we help you with your squishy order?" required className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FB] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:border-[#FF2E7E]"></textarea>
                   </div>
-                  <button type="submit" className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FF2E7E] to-[#8B5CF6] text-white font-extrabold shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 text-sm">
+                  <button type="submit" className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#FF2E7E] to-[#8B5CF6] text-white font-extrabold shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 text-sm">
                     <Send className="w-4 h-4" /> Send Message
                   </button>
                 </form>
